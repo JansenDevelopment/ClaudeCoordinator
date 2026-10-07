@@ -1,0 +1,16 @@
+{
+  "name": "martijn-coordinator",
+  "owner": {
+    "name": "Martijn Jansen"
+  },
+  "metadata": {
+    "description": "Werken met een coördinator-sessie en chips in worktrees in de Claude desktop-app."
+  },
+  "plugins": [
+    {
+      "name": "coordinator",
+      "source": "./plugins/coordinator",
+      "description": "Eén coördinator-sessie per repo die merget, pusht en releaset, en chips in worktrees die alleen op hun eigen branch committen - met een hook die dat afdwingt."
+    }
+  ]
+}
