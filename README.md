@@ -3,9 +3,9 @@
 Werken met meerdere Claude-sessies tegelijk aan één repo, zonder dat ze elkaar of `main` in de weg zitten:
 
 - **`/coordinator`** maakt van een sessie in de hoofdcheckout de coördinator (⚡). Die deelt werk uit,
-  merget wat klaar is, draait de tests, ruimt worktrees op en pusht of releaset alleen als jij dat vraagt.
+  merget wat klaar is, doet kleine dingen zelf, ruimt worktrees op en pusht of releaset alleen als jij dat vraagt.
 - **`/chip`** besteedt een taak uit aan een nieuwe sessie (🔷) in een eigen worktree
-  (`.claude/worktrees/<naam>`). Die commit alleen op de eigen branch en meldt zich daarna bij de
+  (`.claude/worktrees/<naam>`), met een korte opdracht met één doel. Die commit alleen op de eigen branch en meldt zich daarna bij de
   coördinator. Vragen die jij moet beantwoorden lopen ook via de coördinator.
 - **De hook `worktree-guard.py`** weigert in een worktree-sessie `git push`, `gh pr merge`,
   `gh release …`, het verzetten van main/master en schrijvende git-opdrachten op de hoofdcheckout.
@@ -23,7 +23,7 @@ Werken met meerdere Claude-sessies tegelijk aan één repo, zonder dat ze elkaar
 In Claude Code:
 
 ```
-/plugin marketplace add <git-url-of-pad-van-deze-repo>
+/plugin marketplace add JansenDevelopment/ClaudeCoordinator
 /plugin install coordinator@martijn-coordinator
 ```
 

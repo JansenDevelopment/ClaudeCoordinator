@@ -15,7 +15,7 @@ is, mergen en pushen chips toch zelf naar main (en zo kwam er eens een regressie
 - de project-`CLAUDE.md` zegt het bij voorkeur ook (de afspraak);
 - en deze skill zet het in elke chip, met hoe de sessie zich terugmeldt (de werkwijze).
 
-Vereist de Claude desktop-app (Code-tab): `spawn_task`, de zijbalk-tools en `SendMessage`.
+Vereist de Claude desktop-app (Code-tab): `spawn_task`, de sessie-tools en `SendMessage`.
 
 ## Stappen
 
@@ -23,9 +23,12 @@ Vereist de Claude desktop-app (Code-tab): `spawn_task`, de zijbalk-tools en `Sen
    is het adres waarnaar de chip zich terugmeldt - **exact**, met de ⚡ ervoor (zie `/coordinator`).
    Is de sessie geen coördinator (zit je zelf in een worktree), maak dan geen chip maar stel het voor
    aan de gebruiker.
-2. **Schrijf de opdracht** zoals altijd: zelfstandig leesbaar, met repo-pad, bestanden, context uit
-   dit gesprek, wat "klaar" is, welke tests. Volg de bestaande gewoontes van de repo (CLAUDE.md,
-   plannenmap, taal van commits).
+2. **Schrijf de opdracht kort en smal** (snellere iteratie): **één doel**, een paar zinnen, met wat er
+   moet gebeuren, waar ongeveer, en wat "klaar" is (controleerbaar: bij een bug een test die eerst
+   faalt, bij een feature wat je moet zien). Geen lange spec, geen "lees eerst X, Y en Z", geen lijst
+   van elk randgeval. Groter werk: knip het in meer kleine chips. Is iets maar één regel, een waarde of
+   één bestand, maak dan géén chip: dat doet de coördinator zelf. Heeft de repo een opzetscript voor een
+   verse worktree (zie de CLAUDE.md), noem dat als één regel; geen eigen uitleg over installeren.
 3. **Plak de vaste staart eronder** (hieronder), met `<coördinator>` ingevuld.
 4. `spawn_task` met een **korte titel: `🔷 ` plus twee tot vier woorden**, het onderwerp en geen
    zin, met een hoofdletter en zonder lidwoorden. Bijvoorbeeld `🔷 Rijhouding paard`,
@@ -33,30 +36,29 @@ Vereist de Claude desktop-app (Code-tab): `spawn_task`, de zijbalk-tools en `Sen
    De titel wordt de sessienaam. Aan de 🔷 zie je in de zijbalk dat het een chip in een worktree is,
    en kort lees je hem in één oogopslag. Wat de chip precies doet zet je in de tldr.
 5. Meld de gebruiker in één of twee zinnen wat de chip doet.
-6. **De chip in zijn mapje.** `spawn_task` kan geen groep meegeven, dus een gestarte chip staat eerst in
-   de groep van de coördinator (`⚡ Coördinatoren`). De coördinator hoort pas dat hij gestart is bij het
-   volgende bericht van de gebruiker; daarom verplaatst de chip **zichzelf** als eerste stap (zie de
-   staart: `move_sessions` met "self" vraagt niets). Vangnet aan de kant van de coördinator, **bij elke
-   beurt** waarin de melding "The user started your suggested background task" staat, en bij elke poll,
-   vóór iets anders:
-   - `list_sessions`: zoek de sessie met de 🔷-titel van de chip en een cwd in `<repo>/.claude/worktrees/`.
-   - `list_groups`: zoek `🔷 <repo> chips`. Bestaat die niet, dan `create_group` (zie `/coordinator`
-     over de volgorde).
-   - `move_sessions` met dat session-id en group-id. Meld het niet apart; het hoort bij het starten.
-   Is de coördinator sinds het maken van de chip hernoemd, stuur de chip dan meteen het nieuwe adres.
+6. **Geen mapje.** De app hangt een gestarte chip als subsessie onder de coördinator die hem voorstelde.
+   Dat is de groepering: verplaats een chip niet naar een groep (`move_sessions`). Is de coördinator
+   sinds het maken van de chip hernoemd, stuur de chip dan meteen het nieuwe adres.
 
 ## De vaste staart
 
 ```
 ## Afspraken voor deze sessie
-- Eerste stap, vóór het werk: zet jezelf in het chipsmapje van de zijbalk. `list_groups` (ccd_sidebar),
-  zoek `🔷 <repo> chips` en roep `move_sessions` aan met ["self"] en dat group-id. Bestaat het mapje
-  niet of heb je die tools niet, sla het over: de coördinator doet het dan.
 - Werk in je eigen worktree en commit op je eigen branch (volg de commitstijl van de repo).
   Merge NIET naar main, push NIET, maak geen release en redeploy niets: dat doet de coördinator.
   Een hook weigert het ook.
 - Main nodig (conflicten, nieuwe code)? Merge `main` of `origin/main` in je eigen branch, niet andersom.
-- Draai de relevante tests, en vóór je klaar meldt de hele suite (zie de CLAUDE.md van de repo).
+- Klein en snel: doe het ene ding, zonder analyse vooraf, refactor of onderzoeksverslag. Proberen en
+  testen tot het werkt mag. Een screenshot als het zichtbaar is; metingen alleen als de opdracht over
+  snelheid gaat. Docs alleen waar iets door jouw wijziging niet meer klopt. Eén commit, een rapport van
+  een paar regels.
+- Raak alleen aan wat de opdracht vraagt: elke gewijzigde regel moet daaruit volgen. Geen
+  opruimwerk ernaast (andere chips werken tegelijk in dezelfde code, dus dat geeft merge-conflicten).
+  Ruim wel op wat jouw eigen wijziging overbodig maakt; andere dode code meld je, je haalt hem niet weg.
+- Draai de relevante tests: die van wat je raakt plus wat daarop leunt. NIET de hele suite: die draait
+  de coördinator na het mergen, op de echte combinatie van branches (meerdere chips die tegelijk de
+  hele suite draaien gaven alleen vals alarm door gelijktijdigheid). Noem in je rapport welke tests je
+  draaide.
 - Een keuze die bij de gebruiker ligt (ontwerp, wat open blijft, committen)? Vraag het NIET in je eigen
   venster, maar stuur de vraag naar de coördinator, die hem als meerkeuze aan de gebruiker voorlegt
   en het antwoord terugstuurt. Per vraag, hoogstens vier:
@@ -67,7 +69,8 @@ Vereist de Claude desktop-app (Code-tab): `spawn_task`, de zijbalk-tools en `Sen
 - Klaar, of vastgelopen op een keuze die bij de gebruiker ligt? Meld je bij de coördinator met
   SendMessage aan "<coördinator>":
     branch + laatste commit · wat er gedaan is · tests (aantal geslaagd/gefaald, en welke) ·
-    wat nog open staat · of er een redeploy, herstart of release nodig is (patch of minor).
+    aannames die je zelf maakte waar de opdracht niets over zei · wat nog open staat (ook gemelde
+    dode code) · of er een redeploy, herstart of release nodig is (patch of minor).
   Wordt het bericht tegengehouden (andere permissiemodus), zet hetzelfde rapport dan als je
   laatste antwoord: de coördinator leest het daar.
 - Stop daarna; de coördinator merget en archiveert de sessie.
@@ -75,6 +78,7 @@ Vereist de Claude desktop-app (Code-tab): `spawn_task`, de zijbalk-tools en `Sen
 
 ## Mergen als coördinator
 
-Komt een rapport binnen: lees het, merge de branch (`--no-ff`, "Merge: <titel>"), draai de suite,
-ruim worktree en branch op en archiveer de sessie (zie `/coordinator`). Pushen en releasen alleen als
-de gebruiker erom vraagt.
+Komt een rapport binnen: lees het, merge de branch (`--no-ff`, "Merge: <titel>"), en draai de hele suite
+pas vlak vóór een push, één keer na alle klare chips (alleen de coördinator doet dat; zie `/coordinator`).
+Ruim worktree en branch pas op als `git -C <worktree> status` schoon is, en archiveer dan de sessie.
+Pushen en releasen alleen als de gebruiker erom vraagt.
