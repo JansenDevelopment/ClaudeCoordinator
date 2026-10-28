@@ -9,31 +9,24 @@ De werkwijze: per repo één **coördinator** (⚡) en losse **chips** (🔷) in
 De chips committen alleen op hun eigen branch en melden zich bij de coördinator (`/chip`, en de hook
 `worktree-guard.py` van deze plugin). De coördinator is de enige die naar main merget, pusht en releaset.
 
-Vereist de Claude desktop-app (Code-tab): sessie- en zijbalk-tools, `spawn_task`, `SendMessage`.
+Vereist de Claude desktop-app (Code-tab): de sessie-tools, `start_session`, `SendMessage`.
 
 ## Starten
 
 1. Controleer dat deze sessie in de **hoofdcheckout** draait, niet in `.claude/worktrees/`. Zit je in
    een worktree: zeg dat, en word geen coördinator.
-2. Hernoem de sessie (`set_session_title`, "self") naar **`⚡ <repo>`** (de groep `⚡ Coördinatoren`
-   zegt al wat het is), of houd een bestaande naam met ⚡ ervoor. Let op: dit is ook het adres waar
-   chips naar SendMessage-en. Is de naam veranderd terwijl er chips lopen die de oude naam kennen, dan
-   komt hun rapport niet aan; lees het dan uit hun laatste antwoord (`list_events`) en zeg het de gebruiker.
+2. Hernoem de sessie (`set_session_title`, "self") naar **`⚡ <repo>`**, of houd een bestaande naam met
+   ⚡ ervoor. De titel is alleen voor de gebruiker: chips adresseren de coördinator op zijn
+   `local_…`-sessionId (ze vinden hem als linked session), dus hernoemen breekt niets.
    Per repo is er maar één ⚡. Andere sessies in dezelfde hoofdcheckout verliezen hun ⚡ en heten
    `💬 <repo> · <onderwerp>` (bijsessie: alleen lezen of geparkeerd). Wijzigt zo'n sessie code, stel dan
    voor het werk in een chip voort te zetten: twee sessies in één werkmap zitten elkaars bestanden en
-   branch in de weg.
-3. **De zijbalk.** Groepen, in deze volgorde:
-   - `⚡ Coördinatoren`: alle coördinator-sessies, van elke repo, bij elkaar bovenaan;
-   - `Overig`: alles wat geen coördinator of chip is en nog ongegroepeerd staat.
-   Chips krijgen **geen** mapje: de app hangt een gestarte chip als subsessie onder de coördinator die
-   hem voorstelde. Verplaats chips dus niet.
-   `list_groups`: bestaan ze, gebruik ze; anders `create_group`. Een nieuwe groep komt onderaan te staan
-   en groepen kunnen niet herordend worden: maak `⚡ Coördinatoren` dus nooit opnieuw aan. Zet deze
-   sessie in `⚡ Coördinatoren` (`move_sessions` met "self"), de rest (geen chip) in `Overig`. Laat
-   vastgepinde sessies, sessies in een groep die de gebruiker zelf maakte en routine-runs (niet te
-   groeperen) met rust. Doe dit opnieuw bij elke poll.
-4. Lees de project-`CLAUDE.md` (release-, test- en deploystappen staan daar, niet hier).
+   branch in de weg. Let vooral op **forks** van deze sessie (`startedBy` = jij in `list_sessions`):
+   die erven de ⚡-titel; hernoem ze naar `💬 <repo> · <onderwerp>`.
+3. Lees de project-`CLAUDE.md` (release-, test- en deploystappen staan daar, niet hier).
+
+De zijbalk laat de coördinator met rust: chips hangen als linked session onder hem, en de groepen
+richt de gebruiker zelf in. Verplaats niets.
 
 ## Eén coördinator voor meer repo's
 
@@ -41,7 +34,7 @@ Horen repo's bij één product (bijvoorbeeld een applicatie en de PLC-code ervan
 één coördinator met kennis van allemaal, genoemd naar het product (`⚡ <product>`). De sessie draait in
 de hoofdcheckout van één ervan en werkt in de andere met `git -C`. Let op de base-branch per repo (niet
 overal `main`, soms `develop`). Pollen en opruimen doe je per repo (worktrees in elke
-`<repo>/.claude/worktrees/`), en een chip noemt in zijn opdracht in welke repo hij werkt.
+`<repo>/.claude/worktrees/`), en een chip voor de andere repo krijgt die als `cwd` in `start_session`.
 
 Veiligheidsregels uit de `CLAUDE.md` van de gebruiker (bijvoorbeeld rond PLC's of productie) gelden
 onverkort voor elke chip. Toestemming die zo'n regel vraagt geeft de gebruiker in het venster van de
@@ -49,17 +42,21 @@ chip zelf, nooit via de coördinator: dat is de enige uitzondering op "vragen ga
 
 ## Taken uitdelen
 
-Altijd via `/chip`: titel met `🔷 `, korte en smalle opdracht, de vaste staart met deze sessie als
-adres. Een chip die de gebruiker zelf startte zonder 🔷 en in een worktree draait: hernoem hem. Een
-gestarte chip hangt de app als subsessie onder deze coördinator; verplaats hem niet. Voor een chip in
-een andere repo dan de cwd van de coördinator: geef `spawn_task` de `cwd` van die repo mee.
+Altijd via `/chip` (`start_session`, titel met `🔷 `, korte en smalle opdracht, de vaste staart).
+Een chip die de gebruiker zelf startte zonder 🔷 en in een worktree draait: hernoem hem. Zo'n zelf
+gestarte sessie is níet linked: zijn rapport komt niet vanzelf binnen, die lees je met `list_events`.
 
-## Pollen ("welke sessies zijn klaar?")
+## Rapporten en pollen ("welke sessies zijn klaar?")
+
+Niet zelf in een lus pollen: als een linked chip zijn beurt afrondt, stuurt de app zijn recap hierheen
+en wekt deze sessie (`<side-sessions-event>`) zodra er geen chip meer werkt. Op zo'n bericht, of als
+de gebruiker erom vraagt:
 
 - `git fetch`, `git status -sb` (staat main gelijk met origin? Komt er iets binnen?), en per worktree:
   branch, commits voor op main, ongecommitte bestanden, laatste commit (`git worktree list` + `git -C`).
-- `list_sessions`: welke draaien, welke zijn idle. Van idle sessies het laatste antwoord lezen
-  (`list_events`, limit 2-4): is het een eindrapport, een vraag aan de gebruiker, of halverwege gestopt?
+- `list_sessions` met `linked: true`: alleen jouw chips (plus losse 🔷 van deze repo uit de gewone
+  lijst). Is de recap te kort of ontbreekt hij, lees dan het laatste antwoord (`list_events`, limit 2-4):
+  eindrapport, een vraag aan de gebruiker, of halverwege gestopt?
 - Kijk of iets **buiten jou om** op main of origin/main kwam (een chip die toch zelf merget of pusht,
   of een collega): noem het, en test het mee.
 - Rapporteer een tabel: klaar om te mergen / bezig / gepauzeerd of half af / bewust laten staan
@@ -70,7 +67,8 @@ een andere repo dan de cwd van de coördinator: geef `spawn_task` de `cwd` van d
 
 Een chip stelt een keuze die bij de gebruiker ligt niet in zijn eigen venster maar stuurt hem hierheen
 (VRAAG / KOP / OPTIES, zie `/chip`). Leg die met `AskUserQuestion` voor, met de naam van de chip in de
-vraag of de kop als er meer chips tegelijk vragen, en stuur het antwoord met `SendMessage` terug. Zeg
+vraag of de kop als er meer chips tegelijk vragen, en stuur het antwoord met `SendMessage` terug naar
+het `from` van zijn bericht (zijn `local_…`-id). Zeg
 erbij dat het het antwoord van de gebruiker is, letterlijk, zodat de chip weet dat het geen eigen idee
 van de coördinator is. Ook een vraag die een chip in een rapport noemt ("nog open: …") mag zo voorgelegd
 worden. Toestemming om te committen of te pushen stuur je nooit door namens jezelf: alleen wat de
@@ -83,7 +81,8 @@ gebruiker hier echt koos.
    opdracht van de chip? Opruimwerk of refactors ernaast zijn de bron van conflicten met andere chips:
    noem ze, en stuur ze terug naar de chip als ze de merge in de weg zitten. Lees ook de aannames uit
    het rapport: een aanname die bij de gebruiker ligt, leg je hem voor vóór je merget.
-2. `git merge --no-ff -m "Merge: <titel van de chip>"`. Bij conflicten: begrijp beide kanten. Twee chips
+2. `git merge --no-ff -m "Merge: <titel van de chip>" refs/heads/<branch>` (volledige ref: een tag met
+   dezelfde naam zou anders winnen). Bij conflicten: begrijp beide kanten. Twee chips
    die hetzelfde bouwden voeg je samen tot één, en de dubbele verwijder je. Zeg wat je koos.
 3. **Geen hele testsuite na elke merge.** Na het mergen alleen regenereren wat nodig is (bijvoorbeeld
    een import- of codegen-stap) en hooguit de tests die de chip noemde. Heeft de repo een CI-workflow
@@ -94,10 +93,11 @@ gebruiker hier echt koos.
    standaardrun: zet ze achter een vlag of maak ze ruim, en zeg het. Bekende flakes: los nog eens
    draaien en noemen.
 4. Opruimen, **pas als `git -C <worktree> status` schoon is**: een chip die doorwerkt kan ongecommit
-   werk hebben, en dat is dan weg. `git worktree remove` (nooit `rm -rf` door een junction heen: kijk
-   eerst met `-Attributes ReparsePoint`), `git branch -d`, `git worktree prune`, en de sessie archiveren
-   (`archive_session`). Een map die "Permission denied" geeft wordt nog vastgehouden door de sessie:
-   eerst archiveren.
+   werk hebben, en dat is dan weg. Eerst de sessie archiveren (`archive_session`): dan laat de sessie
+   de map los, en een worktree die de app zelf maakte ruimt ze mee op. Staat de map er daarna nog:
+   `git worktree remove` (nooit `rm -rf` door een junction heen: kijk eerst met
+   `-Attributes ReparsePoint`), of `clean_up_worktrees` (ccd_host). Dan `git branch -d <branch>` en
+   `git worktree prune`.
 
 ## Pushen, releasen, uitrollen
 

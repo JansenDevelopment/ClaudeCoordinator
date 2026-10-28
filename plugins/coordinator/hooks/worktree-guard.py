@@ -39,9 +39,9 @@ def deny(why):
             "hookEventName": "PreToolUse",
             "permissionDecision": "deny",
             "permissionDecisionReason": (
-                why + " Deze sessie draait in een worktree: commit op je eigen branch en meld je "
-                "klaar bij de coordinator-sessie (SendMessage aan de ⚡-sessie van de repo, "
-                "de naam die de chip noemt) met wat er gedaan is, de tests en wat er nog open staat. "
+                why + " Deze sessie draait in een worktree: commit op je eigen branch en rond af "
+                "met wrap_up (de app stuurt je recap naar de ⚡-coordinator die je startte) met wat "
+                "er gedaan is, de tests en wat er nog open staat. "
                 "Mergen naar main, pushen en releasen doet de coordinator."
             ),
         }
@@ -58,7 +58,8 @@ def main():
     if not cmd:
         return
 
-    if re.search(r"\bgit\b[^;&|\n]*\bpush\b", cmd):
+    # `git stash push` is geen push naar een remote.
+    if re.search(r"\bgit\b(?![^;&|\n]*\bstash\s+push\b)[^;&|\n]*\bpush\b", cmd):
         deny("git push is geweigerd.")
     if re.search(r"\bgh\s+pr\s+merge\b|\bgh\s+release\s+(create|upload|edit|delete)\b", cmd):
         deny("Een PR mergen of een release maken is geweigerd.")

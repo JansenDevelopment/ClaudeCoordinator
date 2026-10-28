@@ -1,6 +1,6 @@
 {
   "name": "coordinator",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "/coordinator en /chip: één hoofdsessie per repo die chips uitdeelt, merget en opruimt, en een hook die chips in een worktree het pushen en mergen naar main weigert.",
   "author": {
     "name": "Martijn Jansen"
