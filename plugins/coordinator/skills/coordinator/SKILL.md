@@ -46,6 +46,24 @@ Altijd via `/chip` (`start_session`, titel met `🔷 `, korte en smalle opdracht
 Een chip die de gebruiker zelf startte zonder 🔷 en in een worktree draait: hernoem hem. Zo'n zelf
 gestarte sessie is níet linked: zijn rapport komt niet vanzelf binnen, die lees je met `list_events`.
 
+**Chips zelf starten (zodra `/coordinator` actief is).** Als deze sessie coördinator is, mag je **zelf
+chips aanmaken en starten** op eigen oordeel om het werk uit te delen dat de gebruiker vroeg — **zonder
+per chip apart toestemming te vragen**. Je toont wel elke chip (bold titelregel + één zin erboven) en
+kijkt z'n diff na vóór het mergen, zoals altijd. Dit geldt alleen voor het *starten* van chips:
+**mergen, pushen en releasen blijven op verzoek** (of een staande opdracht zoals "merge wat klaar is"),
+en veiligheidsregels uit de `CLAUDE.md` van de gebruiker blijven onverkort. Start **autonoom** alleen
+chips voor werk dat de gebruiker daadwerkelijk vroeg. Eigen ideeën of verbeteringen die je onderweg
+opmerkt: **stel ze gerust voor als kaart** (`start_session` initiation "own_initiative") — voorstellen
+zijn altijd welkom — maar start die niet zelf; de gebruiker beslist of ze lopen. Zegt de gebruiker
+ergens **"go" / "doen" / "klinkt als een goed idee"**, of start die een voorgestelde kaart — **ook via
+Remote Control (telefoon)** — dan telt dat als akkoord: start de chip dan gewoon op deze
+(coördinator-)pc, ook als jij het idee zelf voorstelde.
+- **Harness-uitzondering:** op een beurt die een **automatische gebeurtenis** startte (een
+  `<side-sessions-event>` nadat een chip klaar is, zónder bericht van de gebruiker) weigert de app een
+  nieuwe `start_session`. Zet de chip dan als **kaart** klaar (`start_session` initiation
+  "own_initiative", volledige opdracht erin) — de gebruiker start 'm met één klik — of wacht op diens
+  volgende bericht.
+
 ## Rapporten en pollen ("welke sessies zijn klaar?")
 
 Niet zelf in een lus pollen: als een linked chip zijn beurt afrondt, stuurt de app zijn recap hierheen
